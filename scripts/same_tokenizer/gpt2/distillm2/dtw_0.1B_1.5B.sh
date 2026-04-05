@@ -152,7 +152,7 @@ export PYTHONPATH=${BASE_PATH}
 # Fix OOM and memory fragmentation errors
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
-CMD="torchrun ${DISTRIBUTED_ARGS} ${BASE_PATH}/finetune.py ${OPTS} $@"
+CMD="torchrun ${DISTRIBUTED_ARGS} ${BASE_PATH}/training/finetune.py ${OPTS} $@"
 
 echo "-------------------------------------------------------"
 echo "Starting DistiLLM-2 + Contra-KD Finetuning"

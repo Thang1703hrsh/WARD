@@ -36,7 +36,7 @@ echo "  ALM + Soft-DTW  |  Teacher: Mistral 7B  →  Student: TinyLLaMA 1.1B"
 echo "  Output: ${OUTPUT_DIR}"
 echo "======================================================================="
 
-python3 "${BASE_PATH}/finetune_alm_dtw.py" \
+python3 "${BASE_PATH}/training/finetune_alm_dtw.py" \
     --config="${CONFIG}" \
     --overrides \
     name="${NAME}" \

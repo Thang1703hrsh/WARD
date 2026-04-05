@@ -351,8 +351,8 @@ Cross-tokenizer ALM experiments use JAX/Flax.
 
 Our code builds on:
 - [MiniLLM / DistiLLM](https://github.com/microsoft/LMOps/tree/main/minillm) (Gu et al., ICML 2024)
-- [DistiLLM-2](https://github.com/jiwonsong-dev/DistiLLM-2) (Ko et al., 2025)
-- [FDD](https://github.com/gongliym/fdd) (Gong et al., 2025)
+- [DistiLLM-2](https://github.com/jongwooko/distillm-2)
+<!-- - [FDD](https://github.com/gongliym/fdd) (Gong et al., 2025) -->
 - [DSKD](https://github.com/songmzhang/DSKD) (Zhang et al., 2024)
 - [DSKDv2](https://github.com/songmzhang/DSKD) (Zhang et al., 2025)
 - [ALM / tokenkit](https://github.com/bminixhofer/tokenkit) (Minixhofer et al., 2025)

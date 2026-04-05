@@ -117,7 +117,7 @@ export TF_CPP_MIN_LOG_LEVEL=3
 export PYTHONPATH=${BASE_PATH}
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
-CMD="torchrun ${DISTRIBUTED_ARGS} ${BASE_PATH}/finetune_dskdv2_dtw.py ${OPTS} $@"
+CMD="torchrun ${DISTRIBUTED_ARGS} ${BASE_PATH}/training/finetune_dskdv2_dtw.py ${OPTS} $@"
 
 echo "======================================================================"
 echo "  DSKDv2 + Soft-DTW  |  Teacher: ${TEACHER_CKPT_NAME}  →  Student: ${CKPT_NAME}"
