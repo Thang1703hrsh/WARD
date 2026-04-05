@@ -10,19 +10,19 @@ N_MODEL_PARALLEL=${3:-1}
 
 NAME="alm_dtw_qwen2.5_7B_instruct_opt_2.7B"
 
-STUDENT_PATH="${BASE_PATH}/ALM/model_hub/opt/opt-2.7B-flax"
-TEACHER_PATH="${BASE_PATH}/ALM/model_hub/qwen2/Qwen2.5-7B-Instruct-flax"
+STUDENT_PATH="${BASE_PATH}/methods/alm/model_hub/opt/opt-2.7B-flax"
+TEACHER_PATH="${BASE_PATH}/methods/alm/model_hub/qwen2/Qwen2.5-7B-Instruct-flax"
 
 STUDENT_TOKENIZER="facebook/opt-2.7b:source=OPT"
 TEACHER_TOKENIZER="Qwen/Qwen2.5-7B-Instruct:source=Qwen2"
 TARGET_TOKENIZER="${STUDENT_TOKENIZER}"
 
 OUTPUT_DIR="${BASE_PATH}/results/cross_tokenizer/alm_dtw/qwen2.5_7B_instruct_opt_2.7B"
-CONFIG="${BASE_PATH}/ALM/configs/cross_tokenizer_distill.yaml"
+CONFIG="${BASE_PATH}/methods/alm/configs/cross_tokenizer_distill.yaml"
 
 mkdir -p "${OUTPUT_DIR}"
 
-export PYTHONPATH="${BASE_PATH}:${BASE_PATH}/ALM"
+export PYTHONPATH="${BASE_PATH}:${BASE_PATH}/methods/alm"
 export TF_CPP_MIN_LOG_LEVEL=3
 export XLA_PYTHON_CLIENT_PREALLOCATE=false
 

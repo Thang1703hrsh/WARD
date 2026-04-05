@@ -41,7 +41,7 @@ from methods.distillm import forward_kl, reverse_kl, js_distance, tv_distance
 from methods.distillm import skewed_forward_kl, skewed_reverse_kl
 from methods.distillm import SampleGenerator, ReplayBuffer
 from methods.distillm.projector import Projector
-from methods.distillm.losses import get_fdd_loss, dtw_distillation_loss
+from methods.distillm.losses import dtw_distillation_loss
 
 from methods.distillm2.losses import get_distillm2_loss_split
 
@@ -460,26 +460,6 @@ def get_distil_loss(args, no_model_batch, logits, teacher_logits):
             raise NotImplementedError
     return distil_loss
 
-# def get_distil_loss(args, teacher_logits, no_model_batch, logits):
-#     if args.model_parallel:
-#         raise NotImplementedError
-#     else:
-#         if "sfkl" in args.type:
-#             distil_loss = skewed_forward_kl(logits, teacher_logits, no_model_batch, lam=args.skew_alpha)
-#         elif "srkl" in args.type:
-#             distil_loss = skewed_reverse_kl(logits, teacher_logits, no_model_batch, lam=args.skew_alpha)
-#         elif "jsd" in args.type:
-#             distil_loss = js_distance(logits, teacher_logits, no_model_batch)
-#         elif "tvd" in args.type:
-#             distil_loss = tv_distance(logits, teacher_logits, no_model_batch)
-#         elif "fkl" in args.type or args.type == "kd":
-#             distil_loss = forward_kl(logits, teacher_logits, no_model_batch)
-#         elif "rkl" in args.type:
-#             distil_loss = reverse_kl(logits, teacher_logits, no_model_batch)
-#         else:
-#             raise NotImplementedError
-#     return distil_loss
-
 
 def get_teacher_lm_loss(args, tokenizer, model, teacher_model, model_batch):
     with torch.no_grad():
@@ -524,10 +504,10 @@ def get_teacher_lm_loss(args, tokenizer, model, teacher_model, model_batch):
 
 
 def finetune(
-    args, tokenizer: AutoTokenizer, model: deepspeed.DeepSpeedEngine, 
-    optimizer: AdamW, lr_scheduler, 
-    dataset, device, 
-    teacher_model=None, velocity_field=None, projector=None, update_velocity_dict={}
+    args, tokenizer: AutoTokenizer, model: deepspeed.DeepSpeedEngine,
+    optimizer: AdamW, lr_scheduler,
+    dataset, device,
+    teacher_model=None, projector=None
 ):
     print_rank("Start Fine-tuning")
 
@@ -560,7 +540,7 @@ def finetune(
     student_generator = SampleGenerator(args, tokenizer)
 
     step, global_step = 1, 1
-    total_loss, total_distil_loss, total_contra_loss, total_dtw_loss, total_fdd_loss, total_time = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    total_loss, total_distil_loss, total_dtw_loss, total_fdd_loss, total_time = 0.0, 0.0, 0.0, 0.0, 0.0
     
     adaptive_threshold = args.init_threshold if "adaptive" in args.type else None
     if args.do_valid:
@@ -718,8 +698,6 @@ def finetune(
             else:
                 loss = lm_loss
 
-            contra_loss = torch.tensor(0.0).to(loss.device)
-
             if "dtw" in args.type:
                 hidden_states = outputs.hidden_states
                 mask = model_batch["attention_mask"].float()
@@ -786,12 +764,6 @@ def finetune(
                 global_distil_loss = distil_loss.item() / dp_world_size
                 total_distil_loss += global_distil_loss / (args.log_interval * args.gradient_accumulation_steps)
             
-            global_contra_loss = 0
-            if "contra" in args.type:
-                dist.all_reduce(contra_loss, dist.ReduceOp.SUM, group=dp_group)
-                global_contra_loss = contra_loss.item() / dp_world_size
-                total_contra_loss += global_contra_loss / (args.log_interval * args.gradient_accumulation_steps)
-
             global_dtw_loss = 0
             if "dtw" in args.type:
                 dist.all_reduce(dtw_loss, dist.ReduceOp.SUM, group=dp_group)
@@ -811,8 +783,8 @@ def finetune(
             total_time += elapsed_time
 
             # Logging
-            def get_log(log_loss, log_distil_loss, log_contra_loss, log_dtw_loss, log_fdd_loss, log_time):
-                return "train | epoch {:3d} | Iter: {:6d}/{:6d} | global iter: {:6d}/{:6d} | loss: {:.4f} | ds_loss: {:.4f} | contra_loss: {:.4f} | dtw_loss: {:.4f} | fdd_loss: {:.4f} | lr: {:.4e} | scale: {:10.4f} | micro time: {:.3f} | step time: {:.3f}".format(
+            def get_log(log_loss, log_distil_loss, log_dtw_loss, log_fdd_loss, log_time):
+                return "train | epoch {:3d} | Iter: {:6d}/{:6d} | global iter: {:6d}/{:6d} | loss: {:.4f} | ds_loss: {:.4f} | dtw_loss: {:.4f} | fdd_loss: {:.4f} | lr: {:.4e} | scale: {:10.4f} | micro time: {:.3f} | step time: {:.3f}".format(
                     epoch,
                     step,
                     args.total_iters * args.gradient_accumulation_steps,
@@ -820,7 +792,6 @@ def finetune(
                     args.total_iters,
                     log_loss,
                     log_distil_loss,
-                    log_contra_loss,
                     log_dtw_loss,
                     log_fdd_loss,
                     lr_scheduler.get_last_lr()[0],
@@ -833,22 +804,19 @@ def finetune(
                 mid_log_step = args.gradient_accumulation_steps // args.mid_log_num
                 mid_log_step = 1 if mid_log_step == 0 else mid_log_step
                 if step % mid_log_step == 0:
-                    print_rank(get_log(global_loss, global_distil_loss, global_contra_loss, global_dtw_loss, global_fdd_loss, 0))
+                    print_rank(get_log(global_loss, global_distil_loss, global_dtw_loss, global_fdd_loss, 0))
 
             if global_step % args.log_interval == 0 and step % args.gradient_accumulation_steps == 0:
                 log_str = get_log(
                     total_loss,
                     total_distil_loss,
-                    total_contra_loss,
                     total_dtw_loss,
                     total_fdd_loss,
                     total_time / (args.log_interval))
-                # print_rank("*" * 100)
                 print_rank(log_str)
-                # print_rank(args.save)
                 print_rank("*" * 100)
                 save_rank(log_str, os.path.join(args.save, "log.txt"))
-                
+
                 # Log to wandb (only rank 0)
                 if dist.get_rank() == 0:
                     metrics = {
@@ -857,15 +825,13 @@ def finetune(
                         "train/lr": lr_scheduler.get_last_lr()[0],
                         "train/epoch": epoch,
                     }
-                    if "contra" in args.type:
-                        metrics["train/contra_loss"] = total_contra_loss
                     if "dtw" in args.type:
                         metrics["train/dtw_loss"] = total_dtw_loss
                     if "fdd" in args.type:
                         metrics["train/fdd_loss"] = total_fdd_loss
                     log_metrics(metrics, step=global_step)
 
-                total_loss, total_distil_loss, total_contra_loss, total_dtw_loss, total_fdd_loss, total_time = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+                total_loss, total_distil_loss, total_dtw_loss, total_fdd_loss, total_time = 0.0, 0.0, 0.0, 0.0, 0.0
 
 
             # Evaluation
@@ -1139,10 +1105,9 @@ def main():
     else:
         teacher_model = None
     
-    velocity_field = None
     projector = None
 
-    if projector is None and args.projector_path is not None:
+    if args.projector_path is not None:
         projector = Projector(d_student=args.d_student, d_teacher=args.d_teacher)
         projector.load_state_dict(torch.load(
             args.projector_path,
@@ -1154,15 +1119,13 @@ def main():
 
     if teacher_model:
         teacher_model.resize_token_embeddings(len(tokenizer))
-    
-    update_velocity_dict = {}
 
     if args.do_train:
         model, best_val_iter = finetune(
-            args, tokenizer, model, 
-            optimizer, lr_scheduler, 
-            dataset, device, 
-            teacher_model, velocity_field, projector, update_velocity_dict
+            args, tokenizer, model,
+            optimizer, lr_scheduler,
+            dataset, device,
+            teacher_model, projector
         )
         # Copy best saved checkpoint out to root dir of this model type
         if args.save and dist.get_rank() == 0:

@@ -139,31 +139,6 @@ def add_hp_args(parser: argparse.ArgumentParser):
     return parser
 
 
-def add_ppo_args(parser: argparse.ArgumentParser):
-    group = parser.add_argument_group('ppo', 'ppo configurations')
-    
-    group.add_argument("--reward-scaling", type=float, default=None)
-    group.add_argument("--cliprange-reward", type=float, default=1)
-    group.add_argument("--ppo-epochs", type=int, default=None)
-    group.add_argument("--num-rollouts", type=int, default=256)
-    group.add_argument("--num-rollouts-per-device", type=int, default=None)
-    group.add_argument("--cliprange", type=float, default=0.2)
-    group.add_argument("--chunk-size", type=int, default=None)
-    group.add_argument("--gamma", type=float, default=0.95)
-    
-    return parser
-
-
-def add_minillm_args(parser: argparse.ArgumentParser):
-    group = parser.add_argument_group('minillm', 'minillm configurations')
-    
-    group.add_argument("--length-norm", action="store_true")
-    group.add_argument("--single-step-reg", action="store_true")
-    group.add_argument("--teacher-mixed-alpha", type=float, default=None)
-    group.add_argument("--lm-coef", type=float, default=1)
-    
-    return parser
-
 
 def add_distillm_args(parser: argparse.ArgumentParser):
     group = parser.add_argument_group('distillm', 'distillm configurations')
@@ -341,13 +316,6 @@ def add_contrakd_args(parser: argparse.ArgumentParser):
 
     return parser
 
-def add_csd_args(parser: argparse.ArgumentParser):
-    group = parser.add_argument_group('csd', 'csd configs')
-    
-    group.add_argument("--csd-mode", type=str, default="SS")
-    
-    return parser
-
 
 def add_wandb_args(parser: argparse.ArgumentParser):
     group = parser.add_argument_group('wandb', 'wandb logging configs')
@@ -365,14 +333,11 @@ def get_args():
     parser = add_runtime_args(parser)
     parser = add_data_args(parser)
     parser = add_hp_args(parser)
-    parser = add_ppo_args(parser)
-    parser = add_minillm_args(parser)
     parser = add_distillm_args(parser)
     parser = add_distillm2_args(parser)
     parser = add_gen_args(parser)
     parser = add_peft_args(parser)
     parser = add_contrakd_args(parser)
-    parser = add_csd_args(parser)
     parser = add_wandb_args(parser)
     parser = deepspeed.add_config_arguments(parser)
     

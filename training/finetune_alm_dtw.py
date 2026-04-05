@@ -15,7 +15,7 @@ The ALM config-YAML + --overrides CLI is preserved unchanged.
 Usage
 -----
   python finetune_alm_dtw.py \\
-      --config=ALM/configs/cross_tokenizer_distill.yaml \\
+      --config=methods/alm/configs/cross_tokenizer_distill.yaml \\
       --overrides \\
       losses=[sft,alm_unconstrained,dtw] \\
       dtw_window=32 \\
@@ -42,9 +42,9 @@ import jax
 import jax.numpy as jnp
 
 # ── ALM modules ───────────────────────────────────────────────────────────────
-import cross_tokenizer_distill as _ctd   # ALM/scripts/cross_tokenizer_distill.py
-from tokenkit import parse_args as _pa   # ALM/tokenkit/parse_args.py
-from tokenkit.training import losses as _losses  # ALM/tokenkit/training/losses.py
+import cross_tokenizer_distill as _ctd   # methods/alm/cross_tokenizer_distill.py
+from tokenkit import parse_args as _pa   # methods/alm/tokenkit/parse_args.py
+from tokenkit.training import losses as _losses  # methods/alm/tokenkit/training/losses.py
 
 
 # ═════════════════════════════════════════════════════════════════════════════

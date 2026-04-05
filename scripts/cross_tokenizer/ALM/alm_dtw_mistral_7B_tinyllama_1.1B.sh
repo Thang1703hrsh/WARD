@@ -14,8 +14,8 @@ N_MODEL_PARALLEL=${3:-1}
 
 NAME="alm_dtw_mistral_7B_tinyllama_1.1B"
 
-STUDENT_PATH="${BASE_PATH}/ALM/model_hub/tinyllama/TinyLlama-1.1B-flax"
-TEACHER_PATH="${BASE_PATH}/ALM/model_hub/mistral/Mistral-7B-v0.1-flax"
+STUDENT_PATH="${BASE_PATH}/methods/alm/model_hub/tinyllama/TinyLlama-1.1B-flax"
+TEACHER_PATH="${BASE_PATH}/methods/alm/model_hub/mistral/Mistral-7B-v0.1-flax"
 
 # Both use the LLaMA tokenizer family
 STUDENT_TOKENIZER="TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T:source=Llama2"
@@ -23,11 +23,11 @@ TEACHER_TOKENIZER="mistralai/Mistral-7B-v0.1:source=Llama2"
 TARGET_TOKENIZER="${STUDENT_TOKENIZER}"
 
 OUTPUT_DIR="${BASE_PATH}/results/cross_tokenizer/alm_dtw/mistral_7B_tinyllama_1.1B"
-CONFIG="${BASE_PATH}/ALM/configs/cross_tokenizer_distill.yaml"
+CONFIG="${BASE_PATH}/methods/alm/configs/cross_tokenizer_distill.yaml"
 
 mkdir -p "${OUTPUT_DIR}"
 
-export PYTHONPATH="${BASE_PATH}:${BASE_PATH}/ALM"
+export PYTHONPATH="${BASE_PATH}:${BASE_PATH}/methods/alm"
 export TF_CPP_MIN_LOG_LEVEL=3
 export XLA_PYTHON_CLIENT_PREALLOCATE=false
 

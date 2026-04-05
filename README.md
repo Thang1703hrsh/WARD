@@ -8,6 +8,76 @@ WARD is a plug-and-play alignment regularizer that augments existing knowledge d
 
 ---
 
+## Repository Structure
+
+```
+WARD/
+├── training/                         # Training entry points
+│   ├── finetune.py                   # Same-tokenizer training (DistiLLM, FDD, WARD-DTW)
+│   ├── finetune_dskd_dtw.py          # Cross-tokenizer DSKD + WARD-DTW
+│   ├── finetune_dskdv2_dtw.py        # Cross-tokenizer DSKDv2 + WARD-DTW
+│   ├── finetune_alm_dtw.py           # Cross-tokenizer ALM + WARD-DTW (JAX/Flax)
+│   └── arguments.py                  # CLI argument definitions
+│
+├── methods/                          # Core implementation of each KD method
+│   ├── distillm/                     # Same-tokenizer: losses, projector, sampler, buffer
+│   │   ├── losses.py                 # Soft-DTW, FDD, forward/reverse KL, DistiLLM losses
+│   │   ├── projector.py              # Linear projector (maps student → teacher hidden dim)
+│   │   ├── sampler.py                # On-policy student generation
+│   │   └── buffer.py                 # Replay buffer for adaptive sampling
+│   ├── distillm2/                    # Same-tokenizer: DistiLLM-2 (SGO-based) losses
+│   ├── dskd/                         # Cross-tokenizer: DSKD baseline
+│   │   ├── criterions/               # min_edit_dis_kld (Logits Alignment via Min-Edit)
+│   │   ├── data_utils/               # Cross-tokenizer dataset loaders
+│   │   ├── distillation.py           # DSKD training loop
+│   │   └── distiller.py              # Model wrapper (student + teacher)
+│   ├── dskdv2/                       # Cross-tokenizer: DSKDv2 baseline
+│   │   ├── criterions/               # dual_space_kd_v2 (Dual-Space KD v2)
+│   │   ├── data_utils/
+│   │   ├── distillation.py
+│   │   └── distiller.py
+│   └── alm/                          # Cross-tokenizer: ALM baseline (JAX/Flax)
+│       ├── cross_tokenizer_distill.py  # ALM training entry (JAX)
+│       ├── tokenkit/                 # ALM core library (tokenizer alignment, losses, models)
+│       └── configs/                  # YAML configs for ALM experiments
+│
+├── data_utils/                       # Dataset loading for same-tokenizer training
+│   ├── lm_datasets.py                # LMTrainDataset (Dolly, instruction-following)
+│   ├── prompt_datasets.py            # PromptDataset for evaluation
+│   └── distributed_indexed.py        # Distributed indexed dataset utilities
+│
+├── scripts/                          # Shell scripts for all experiments
+│   ├── same_tokenizer/               # GPT-2, LLaMA-2, OpenLLaMA-2 experiments
+│   │   ├── gpt2/                     # fdd/, distillm/, distillm2/, dtw/, sft/, eval/
+│   │   ├── llama2/                   # fdd/, distillm/, distillm2/, dtw/, sft/, eval/
+│   │   └── openllama2/               # fdd/, distillm/, distillm2/, dtw/, sft/, eval/
+│   └── cross_tokenizer/              # Cross-tokenizer experiments
+│       ├── ALM/                      # ALM + WARD-DTW (5 teacher→student pairs)
+│       ├── DSKD/                     # DSKD + WARD-DTW (5 pairs)
+│       └── DSKD2/                    # DSKDv2 + WARD-DTW (5 pairs)
+│
+├── configs/
+│   └── deepspeed/                    # DeepSpeed ZeRO configs (stage 2, fp16/bf16)
+│
+├── tools/                            # Data preprocessing utilities
+│   ├── process_data_dolly.py         # Process Dolly instruction dataset
+│   ├── process_data_pretrain.py      # Process OpenWebText pre-training data
+│   └── push_to_hub.py                # Upload checkpoints to HuggingFace Hub
+│
+├── utils.py                          # Shared utilities (model loading, tokenizer, logging)
+├── rouge_metric.py                   # ROUGE evaluation metric
+├── wandb_logger.py                   # Weights & Biases logging helper
+└── README.md
+```
+
+**Key design principles:**
+- All training entry points live in `training/` and are invoked from the repo root (`WARD/`) as `BASE_PATH`
+- `methods/distillm/losses.py` contains the **Soft-DTW implementation** shared across all same-tokenizer experiments
+- `methods/alm/tokenkit/training/losses.py` contains the **JAX Soft-DTW implementation** for ALM cross-tokenizer experiments
+- DSKD/DSKDv2 modules are loaded at runtime via `sys.path` injection from their respective `methods/dskd*/` directories
+
+---
+
 ## Environment Setup
 
 ```bash
