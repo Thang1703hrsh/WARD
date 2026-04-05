@@ -55,9 +55,7 @@ from wandb_logger import init_wandb, log_metrics, finish_wandb
 
 torch.set_num_threads(4)
 
-# =========================
 # FDD helpers (same as fdd_finetune.py)
-# =========================
 
 class CustomsQwen3Attention(torch.nn.Module):
     def __init__(self, original_self_attn):
